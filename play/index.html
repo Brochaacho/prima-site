@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<title>Prima: Ballet Adventure — free demo</title>
+<meta name="description" content="Play the free Nutcracker chapter of Prima: Ballet Adventure, a ballet platformer for kids. No ads, no tracking.">
+<link rel="stylesheet" href="css/fonts.css">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<canvas id="c"></canvas>
+
+<div class="hud" id="hud">
+  <div class="pill" id="hearts"></div>
+  <div class="pill"><span id="itemIcon"></span><span id="items">0</span></div>
+  <div class="spacer"></div>
+  <div class="pill" id="powPill" style="display:none"><span id="powIcon"></span><span class="pbar"><i id="powBar"></i></span></div>
+  <div class="pill" id="timerPill" style="display:none"><svg width="14" height="14" viewBox="0 0 24 24"><circle cx="12" cy="13" r="8" fill="none" stroke="#fff" stroke-width="2"/><path d="M12 9v4l2.5 2M9 2h6" stroke="#fff" stroke-width="2" stroke-linecap="round"/></svg><span id="timer">0</span></div>
+  <div class="pill"><span class="beat" id="beat"></span><span id="score">0</span></div>
+  <button class="pill iconbtn" id="home" aria-label="Home"><svg width="16" height="16" viewBox="0 0 24 24"><path d="M4 11l8-7 8 7v9a1 1 0 01-1 1h-4v-6h-6v6H5a1 1 0 01-1-1z" fill="#fff"/></svg></button>
+  <button class="pill iconbtn" id="menu" aria-label="Pause"><svg width="16" height="16" viewBox="0 0 24 24"><rect x="6" y="5" width="4" height="14" rx="1.5" fill="#fff"/><rect x="14" y="5" width="4" height="14" rx="1.5" fill="#fff"/></svg></button>
+  <button class="pill iconbtn" id="mute" aria-label="Sound"></button>
+</div>
+<div class="toast" id="toast"></div>
+<div class="btoast" id="badgeToast"></div>
+<div class="intro" id="intro"><small id="introAct"></small><b id="introName"></b></div>
+
+<div class="controls" id="controls">
+  <div class="dpad" id="dpad">
+    <div class="l"><svg width="20" height="20" viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7" stroke="#fff" stroke-width="2.4" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+    <div class="r"><svg width="20" height="20" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7" stroke="#fff" stroke-width="2.4" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+  </div>
+  <div class="acts">
+    <div class="btn" data-k="spin">Spin</div>
+    <div class="btn big" data-k="jump">Leap</div>
+  </div>
+</div>
+
+<div class="dhud" id="dhud">
+  <div class="pill" id="dplayer">Player 1</div>
+  <div class="pill" id="dscore">0</div>
+  <div class="spacer"></div>
+  <button class="pill iconbtn" id="dquit" aria-label="Quit"><svg width="14" height="14" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18" stroke="#fff" stroke-width="2.4" stroke-linecap="round"/></svg></button>
+</div>
+<div class="lanes" id="lanes">
+  <div class="lane" data-l="0" style="--c:#ff9ec0"><i></i><span>Plié</span><kbd>D</kbd></div>
+  <div class="lane" data-l="1" style="--c:#9fd0ff"><i></i><span>Arabesque</span><kbd>F</kbd></div>
+  <div class="lane" data-l="2" style="--c:#ffd36e"><i></i><span>Jeté</span><kbd>J</kbd></div>
+  <div class="lane" data-l="3" style="--c:#c9a6ff"><i></i><span>Pirouette</span><kbd>K</kbd></div>
+</div>
+
+<div class="map hidden" id="map">
+  <div class="mapscroll" id="mapscroll"><div class="mapinner" id="mapinner"></div></div>
+  <div class="maptop">
+    <button class="pill iconbtn" id="mapHome" aria-label="Home"><svg width="16" height="16" viewBox="0 0 24 24"><path d="M4 11l8-7 8 7v9a1 1 0 01-1 1h-4v-6h-6v6H5a1 1 0 01-1-1z" fill="#fff"/></svg></button>
+    <div class="pill" id="mapWho">Story Map</div><div class="spacer"></div>
+    <div class="pill" id="mapStars"></div>
+  </div>
+</div>
+<div class="coopctl" id="coopctl">
+  <div class="cl" data-who="1"><div class="cdp"><div data-dir="left">◀</div><div data-dir="right">▶</div></div><div class="cbt"><div data-ck="spin">Spin</div><div data-ck="jump" class="big">Leap</div></div><span class="ctag" style="background:#ff9ec0">P1</span></div>
+  <div class="cl" data-who="2"><div class="cdp"><div data-dir="left">◀</div><div data-dir="right">▶</div></div><div class="cbt"><div data-ck="spin">Spin</div><div data-ck="jump" class="big">Leap</div></div><span class="ctag" style="background:#3fc8a0">P2</span></div>
+</div>
+<div class="maker hidden" id="maker">
+  <div class="mktop">
+    <button class="pill iconbtn" id="mkHome" aria-label="Home"><svg width="16" height="16" viewBox="0 0 24 24"><path d="M4 11l8-7 8 7v9a1 1 0 01-1 1h-4v-6h-6v6H5a1 1 0 01-1-1z" fill="#fff"/></svg></button>
+    <div class="mkslots" id="mkSlots"></div><div class="spacer"></div>
+    <button class="pill" id="mkThemeBtn">World: <b id="mkTheme"></b></button>
+    <button class="pill" id="mkClear">Clear</button>
+    <button class="mkplay" id="mkPlay">Play ▶</button>
+  </div>
+  <div class="mkwrap" id="mkWrap"><canvas id="mkCanvas"></canvas></div>
+  <div class="mktools" id="mkTools"></div>
+</div>
+<div class="overlay" id="overlay"><div class="deco" id="deco"></div><div class="card" id="card"></div></div>
+
+<script>
+// Web demo settings. Paste the App Store link here on launch day.
+window.PRIMA_WEB_DEMO=true;
+window.PRIMA_APP_STORE_URL="";
+</script>
+<script src="js/setup.js"></script>
+<script src="js/levels.js"></script>
+<script src="js/engine.js"></script>
+<script src="js/ui.js"></script>
+<script src="js/update.js"></script>
+<script src="js/render.js"></script>
+<script src="js/battle.js"></script>
+<script src="js/store.js"></script>
+<script src="js/main.js"></script>
+</body>
+</html>
