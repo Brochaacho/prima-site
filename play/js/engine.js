@@ -133,6 +133,7 @@ function silentUrl(){
   return URL.createObjectURL(new Blob([buf],{type:'audio/wav'}));
 }
 function ensureAudio(){
+  setTimeout(()=>{try{loadTitleSong();}catch(e){}},0);
   if(false){voicePrimed=true;try{const u=new SpeechSynthesisUtterance(' ');u.volume=0;speechSynthesis.speak(u);}catch(e){}}
   try{if(navigator.audioSession)navigator.audioSession.type='playback';}catch(e){}
   try{
@@ -169,8 +170,33 @@ function sweep(f0,f1,dur,gain,type='sine'){
   g.gain.setValueAtTime(gain,t);g.gain.exponentialRampToValueAtTime(.0001,t+dur);
   o.connect(g);g.connect(sfxBus||master);o.start(t);o.stop(t+dur+.03);
 }
+// ---- title song: a real recording that loops on the home screen ----
+let titleBuf=null,titleSrc=null,titleGain=null,titleLoading=false,titleLoop=[0,0];
+function loadTitleSong(){
+  if(titleBuf||titleLoading||!actx)return;titleLoading=true;
+  fetch('audio/title.mp3').then(r=>{if(!r.ok)throw 0;return r.arrayBuffer();}).then(a=>new Promise((ok,no)=>actx.decodeAudioData(a,ok,no))).then(b=>{
+    // trim the silent padding at both ends so the loop is seamless
+    const d=b.getChannelData(0),th=.007;let s0=0,s1=d.length-1;
+    while(s0<d.length&&Math.abs(d[s0])<th)s0++;while(s1>s0&&Math.abs(d[s1])<th)s1--;
+    titleLoop=[s0/b.sampleRate,(s1+1)/b.sampleRate];titleBuf=b;
+  }).catch(()=>{titleLoading=false;});
+}
+function titleSongTick(){
+  const want=state==='title'&&mode!=='dance'&&!!titleBuf;
+  if(want&&!titleSrc){
+    const t=actx.currentTime;titleGain=actx.createGain();titleGain.gain.setValueAtTime(0,t);titleGain.gain.linearRampToValueAtTime(.6,t+1.2);
+    titleSrc=actx.createBufferSource();titleSrc.buffer=titleBuf;titleSrc.loop=true;titleSrc.loopStart=titleLoop[0];titleSrc.loopEnd=titleLoop[1];
+    titleSrc.connect(titleGain);titleGain.connect(musicBus);titleSrc.start(t,titleLoop[0]);
+  }else if(!want&&titleSrc){
+    const t=actx.currentTime,src=titleSrc,g=titleGain;g.gain.cancelScheduledValues(t);g.gain.setValueAtTime(g.gain.value,t);g.gain.linearRampToValueAtTime(0,t+.5);
+    try{src.stop(t+.55);}catch(e){}titleSrc=null;titleGain=null;
+  }
+  return want;
+}
 function scheduleMusic(){
-  if(!actx||!musicStart)return;
+  if(!actx)return;
+  if(titleSongTick())return;
+  if(!musicStart)return;
   const M=L.music,now=actx.currentTime,mt=M.meter,bars=M.ch.length;
   if(nextNote<now-.05){const k=Math.ceil((now-nextNote)/BEAT);nextNote+=k*BEAT;beatIdx+=k;}
   curBus=musicBus;
