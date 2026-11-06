@@ -277,7 +277,7 @@ function renderMap(){
   const from=Math.min(Math.max(0,avatarK),cur),fb=LEVELS[ORDER[from]].ballet;
   h+=`<div class="avatar" id="avatar" style="left:${pos[from].x}px;top:${pos[from].y-30}px">${heroHTML(fb)}</div>`;
   inner.innerHTML=h;
-  inner.querySelectorAll('.node').forEach(n=>n.addEventListener('click',()=>{const k=+n.dataset.k;if(!unlockedK(k))return;const i=ORDER[k],b=LEVELS[i].ballet;if(paid(b)){askUnlock('map');return;}if(STORY[b]&&!storySeen[b]&&balletLevels(b)[0][1]===i)showStory(b,()=>startLevel(i));else startLevel(i);}));
+  inner.querySelectorAll('.node').forEach(n=>n.addEventListener('click',()=>{const k=+n.dataset.k;if(!unlockedK(k))return;const b=LEVELS[ORDER[k]].ballet;if(paid(b)){askUnlock('map');return;}sfx('tick');openStop(k);}));
   inner.querySelectorAll('.banner').forEach(n=>n.addEventListener('click',()=>{const b=n.dataset.b;if(STORY[b])showStory(b,()=>openMap());}));
   {const pr=curProfile();$('mapWho').innerHTML=pdot(pr,22)+' '+pr.name+"'s map";}
   $('mapStars').innerHTML=STAR(true,14)+' '+totalStars()+'/'+ORDER.length*3;
@@ -287,7 +287,7 @@ function renderMap(){
     const av=$('avatar');
     setTimeout(()=>{av.classList.add('walk');av.innerHTML=heroHTML(LEVELS[ORDER[cur]].ballet);av.style.left=pos[cur].x+'px';av.style.top=(pos[cur].y-30)+'px';
       try{sc.scrollTo({top:pos[cur].y-vh*.55,behavior:'smooth'});}catch(e){sc.scrollTop=pos[cur].y-vh*.55;}},500);
-    setTimeout(()=>{av.classList.remove('walk');const n=inner.querySelector(`.node[data-k="${cur}"]`);if(n){n.classList.add('pop');}sfx('item');},1950);
+    setTimeout(()=>{av.classList.remove('walk');const n=inner.querySelector(`.node[data-k="${cur}"]`);if(n){n.classList.add('pop');}sfx('item');if(state==='map'&&!paid(LEVELS[ORDER[cur]].ballet))setTimeout(()=>{if(state==='map')openStop(cur);},450);},1950);
   }
   avatarK=cur;try{LS.set('avatarK',cur);}catch(e){}
 }
@@ -310,6 +310,7 @@ $('mapHome').addEventListener('click',()=>{$('map').classList.add('hidden');back
 addEventListener('resize',()=>{if(state==='map')renderMap();});
 
 function backToTitle(){
+  shopReturn=null;closeStop(true);
   try{speechSynthesis.cancel();}catch(e){}
   $('map').classList.add('hidden');
   mode='story';musicStart=0;state='title';
@@ -319,6 +320,7 @@ function backToTitle(){
 function openMenu(){if(state!=='play')return;state='pause';for(const k in keys)keys[k]=false;showOverlay('pause');}
 function resume(){state='play';$('overlay').classList.add('hidden');$('controls').classList.toggle('show',!coop);$('coopctl').classList.toggle('show',coop);}
 function startLevel(i){
+  shopReturn=null;closeStop(true);
   if(LEVELS[i]&&!LEVELS[i].custom&&paid(LEVELS[i].ballet)){askUnlock(state==='map'?'map':'title');return;}
   $('map').classList.add('hidden');
   ensureAudio();setLevel(i);resetLevel();restartMusic();state='play';
@@ -407,7 +409,7 @@ function shopHTML(){
     else sw=`<span class="swatch hs">${trailIcon(val)}</span>`;
     const rq=SHOP[shopTab].find(x=>x[0]===id)[4],locked=rq&&!own;
     return `<button class="sitem ${wear?'wear':''} ${locked?'reward':''}" data-buy="${id}">${sw}<b>${nm}</b><small>${wear?'Wearing':own?'Tap to wear':locked?(rq==='crowns5'?CROWN(11)+' Win 5 gold crowns':'Finish '+BALLETS[rq]):SPK+' '+price}</small></button>`;}).join('')+
-  `</div><div class="shopmsg">${shopMsg}</div><button class="cta" data-a="acts">Done</button>`;
+  `</div><div class="shopmsg">${shopMsg}</div>${shopReturn!==null?'<button class="cta" data-u="stopgo">Dance in this outfit</button><button class="ghost" data-u="stopmap">Back to the map</button>':'<button class="cta" data-a="acts">Done</button>'}`;
 }
 function headIcon(h){
   const m={bow:'<path d="M12 12L3 7v10zM12 12l9-5v10z" fill="#ff7aa8"/><circle cx="12" cy="12" r="2.5" fill="#ff5c86"/>',
@@ -670,3 +672,29 @@ function endingHTML(){
   <button class="cta" data-u="${last?'endmap':'endnext'}">${last?'Back to the map':'Next'}</button>`;
 }
 function showEnding(){endPage=0;$('map').classList.add('hidden');state='story';showOverlay('ending');sfx('chimeup');}
+
+// ================= stop card: shown when you arrive at (or tap) a station on the map =================
+let shopReturn=null;
+const HANGER='<svg width="18" height="18" viewBox="0 0 24 24"><path d="M12 7.5a2 2 0 1 1 2-2" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M12 7.5v1.5L3.5 15.2c-.9.7-.4 2.1.7 2.1h15.6c1.1 0 1.6-1.4.7-2.1L12 9" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>';
+function openStop(k){
+  const i=ORDER[k],lv=LEVELS[i],b=lv.ballet,st=starOf(i),c=CHAPTERS.findIndex(([bb,s,e])=>k>=s&&k<e);
+  const card=$('stopcard');
+  card.innerHTML=`<button class="stopx" data-s="close" aria-label="Close">×</button>
+    <div class="stophero">${heroHTML(b)}</div>
+    <div class="stopinfo"><small>${BALLETS[b]} · ${lv.act||('Station '+(k+1))}</small><b>${lv.name}</b>
+      <span class="stopstars">${done(i)?STAR(st>=1,15)+STAR(st>=2,15)+STAR(st>=3,15)+(crowns[i]?CROWN(16):''):'<em>'+(lv.blurb||'')+'</em>'}</span></div>
+    <div class="stopq">Want to change your outfit first?</div>
+    <div class="stopbtns"><button class="stopwear" data-s="wear">${HANGER}<span>Wardrobe</span></button><button class="stopplay" data-s="play">Dance!</button></div>`;
+  card.dataset.k=k;
+  card.querySelectorAll('[data-s]').forEach(x=>x.addEventListener('click',e=>{e.stopPropagation();const a=x.dataset.s;
+    if(a==='close'){sfx('tick');closeStop();}
+    else if(a==='play')goStop(k);
+    else if(a==='wear'){sfx('chimeup');shopReturn=k;closeStop(true);$('map').classList.add('hidden');state='title';try{titleScene();}catch(_){}shopMsg='';showOverlay('shop');}}));
+  $('stopwrap').classList.add('show');
+}
+function closeStop(now){const w=$('stopwrap');if(w)w.classList.remove('show');}
+function goStop(k){
+  const i=ORDER[k],b=LEVELS[i].ballet;shopReturn=null;closeStop(true);sfx('chimeup');
+  if(STORY[b]&&!storySeen[b]&&balletLevels(b)[0][1]===i)showStory(b,()=>startLevel(i));else startLevel(i);
+}
+$('stopwrap').addEventListener('click',e=>{if(e.target.id==='stopwrap')closeStop();});

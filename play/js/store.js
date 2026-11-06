@@ -97,6 +97,8 @@ function bindStore(c){
     else if(a==='back'){showOverlay('unlock');}
     else if(a==='preview-unlock')finishUnlock();
     else if(a==='go')openMap();
+    else if(a==='stopgo'){const k=shopReturn;if(k!==null)goStop(k);}
+    else if(a==='stopmap'){const k=shopReturn;shopReturn=null;openMap();if(k!==null)setTimeout(()=>openStop(k),350);}
     else if(a==='ending')showEnding();
     else if(a==='endnext'){endPage++;sfx('item');showOverlay('ending');if(endPage===ENDING.length-1)setTimeout(celebrate,300);}
     else if(a==='endmap')openMap();
