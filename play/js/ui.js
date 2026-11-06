@@ -149,6 +149,9 @@ function showOverlay(kind){
   else if(kind==='pause')c.innerHTML=`<div class="eyebrow">Intermission</div><h1>Paused</h1><button class="cta" data-a="resume">Resume</button><button class="ghost" data-a="settings">Settings</button><button class="ghost" data-a="replay">Restart this act</button><button class="ghost" data-a="map" style="margin-top:6px">Story map</button>`;
   else if(kind==='profiles')c.innerHTML=profilesHTML();
   else if(kind==='settings')c.innerHTML=settingsHTML();
+  else if(kind==='tapstart'){c.innerHTML=`${heroHTML(ballet)}<div class="eyebrow">A ballet adventure</div><h1>Prima</h1><div class="tapgo">Tap anywhere to start</div>`;
+    const ov=$('overlay'),go=()=>{ov.removeEventListener('click',go);ensureAudio();sfx('chimeup');showOverlay('title');};
+    setTimeout(()=>ov.addEventListener('click',go),50);}
   else if(kind==='ending')c.innerHTML=endingHTML();
   else if(kind==='unlock')c.innerHTML=unlockHTML();
   else if(kind==='gate')c.innerHTML=gateHTML();

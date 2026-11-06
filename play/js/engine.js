@@ -172,9 +172,11 @@ function sweep(f0,f1,dur,gain,type='sine'){
 }
 // ---- title song: a real recording that loops on the home screen ----
 let titleBuf=null,titleSrc=null,titleGain=null,titleLoading=false,titleLoop=[0,0];
+// download the song as soon as the page opens, so it's ready the moment sound is allowed
+const titleBytes=fetch('audio/title.mp3').then(r=>{if(!r.ok)throw 0;return r.arrayBuffer();}).catch(()=>null);
 function loadTitleSong(){
   if(titleBuf||titleLoading||!actx)return;titleLoading=true;
-  fetch('audio/title.mp3').then(r=>{if(!r.ok)throw 0;return r.arrayBuffer();}).then(a=>new Promise((ok,no)=>actx.decodeAudioData(a,ok,no))).then(b=>{
+  titleBytes.then(a=>{if(!a)throw 0;return new Promise((ok,no)=>actx.decodeAudioData(a.slice(0),ok,no));}).then(b=>{
     // trim the silent padding at both ends so the loop is seamless
     const d=b.getChannelData(0),th=.007;let s0=0,s1=d.length-1;
     while(s0<d.length&&Math.abs(d[s0])<th)s0++;while(s1>s0&&Math.abs(d[s1])<th)s1--;

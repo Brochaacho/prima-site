@@ -24,7 +24,10 @@ if(window.PrimaNative&&await PrimaNative.restoreIfEmpty()){location.reload();ret
 initCloud();
 loadSettings();if(SET.gfx==='low')setLowQ(true);loadAch();loadShop();loadSecrets();loadStory();
 setLevel(Math.min(unlocked,LEVELS.length)-1);resetLevel();cam=0;
-showOverlay('title');
+// Browsers only allow sound after a tap, so the web version opens on a "tap to start" screen.
+// The App Store app is allowed to play right away, so it skips straight to the home screen when it can.
+if(window.PrimaNative&&PrimaNative.native){ensureAudio();setTimeout(()=>showOverlay(actx&&actx.state==='running'?'title':'tapstart'),250);}
+else showOverlay('tapstart');
 requestAnimationFrame(loop);
 if(window.PrimaNative)PrimaNative.start();
 })();
