@@ -333,3 +333,5 @@ h1{font-size:62px;font-weight:700;letter-spacing:0;background:linear-gradient(18
 .tapgo{margin-top:22px;font:600 17px Fredoka,Inter,system-ui,sans-serif;letter-spacing:.02em;animation:tapgo 1.6s ease-in-out infinite}
 @keyframes tapgo{0%,100%{opacity:.45;transform:scale(.98)}50%{opacity:1;transform:scale(1.03)}}
 #overlay:has(.card[data-kind="tapstart"]){cursor:pointer}
+/* hidden HUDs must not catch taps meant for the visible one */
+.hud:not(.show) .iconbtn,.dhud:not(.show) .iconbtn{pointer-events:none}

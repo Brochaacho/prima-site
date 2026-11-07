@@ -73,6 +73,19 @@ document.querySelectorAll('.lane').forEach(b=>{
   ['pointerup','pointercancel','pointerleave'].forEach(ev=>b.addEventListener(ev,()=>b.classList.remove('on')));
 });
 $('dquit').addEventListener('click',()=>backToTitle());
+// ---- pause: freezing the audio clock freezes the whole dance, so notes resume exactly where they were ----
+function pauseDance(){
+  if(state!=='dance'||dance.over)return;
+  state='dpause';dance.pausedAt=time;for(const k in keys)keys[k]=false;
+  if(actx&&actx.state==='running')actx.suspend().catch(()=>{});
+  showOverlay('dpause');
+}
+function resumeDance(){
+  if(state!=='dpause')return;
+  dance.fallback+=time-dance.pausedAt;state='dance';$('overlay').classList.add('hidden');$('lanes').classList.add('show');$('dhud').classList.add('show');
+  if(actx)actx.resume().catch(()=>{});
+}
+$('dpause').addEventListener('click',e=>{e.stopPropagation();pauseDance();});
 
 function drawDancer(x,y,s,pose,k){
   ctx.save();ctx.translate(x,y);

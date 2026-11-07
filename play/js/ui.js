@@ -146,6 +146,7 @@ function showOverlay(kind){
     c.innerHTML=`<div class="eyebrow">${fin?'Grand finale':chap?'Chapter complete':L.act+' complete'}</div><h1>Bravo!</h1><div class="bigstars">${[1,2,3].map(n=>STAR(lastStars>=n,38).replace('<svg ',`<svg style="animation-delay:${.25+n*.18}s" `)).join('')}</div>${fin?'<div class="sub">'+(L.finale||'')+'<br>You have danced every ballet on the map!</div>':chap?'<div class="sub">'+(L.finale||'')+'<br>Next chapter: '+BALLETS[LEVELS[nx].ballet]+'</div>':''}${lastPerfect?`<div class="perfect">${CROWN(22)} Perfect! Every ${L.itemName.toLowerCase().replace(/s$/,'')} and no bumps — a gold crown!</div>`:(crowns[LI]?'':`<div class="crownhint">${CROWN(14)} Get every ${L.itemName.toLowerCase().replace(/s$/,'')} without a bump for a gold crown</div>`)}${lastGift?`<div class="gift"><span class="swatch" style="background:linear-gradient(135deg,${lastGift[3].suit},${lastGift[3].h2})"></span><span><small>New costume unlocked</small><b>${lastGift[1]}</b></span></div>`:''}<div class="stats"><div class="stat"><b>${itemCount}/${items.length}</b><span>${L.itemName}</span></div><div class="stat"><b>${score}</b><span>Grace</span></div></div><div class="coins" style="margin-top:14px">${SPK.replace(/14/g,'18')} +${lastCoins} sparkles for the wardrobe</div>${fin?'<button class="cta" data-u="ending">Curtain call</button><button class="ghost" data-a="map">Back to the map</button>':'<button class="cta" data-a="map">Continue the journey</button>'}<button class="ghost" data-a="replay">Replay this act</button>`;}
   else if(false)c.innerHTML=`<div class="eyebrow">Finale</div><h1>Bravo!</h1><div class="sub">${L.finale||'Bravo!'}</div><div class="stats"><div class="stat"><b>${itemCount}/${items.length}</b><span>${L.itemName}</span></div><div class="stat"><b>${score}</b><span>Grace</span></div></div><button class="cta" data-a="replay">Encore</button><button class="ghost" data-a="acts">Home</button>`;
   else if(false)c.innerHTML=`<div class="eyebrow">${L.act} complete</div><h1>Bravo!</h1><div class="stats"><div class="stat"><b>${itemCount}/${items.length}</b><span>${L.itemName}</span></div><div class="stat"><b>${score}</b><span>Grace</span></div></div><button class="cta" data-a="next">Next: ${nextLv&&nextLv.name}</button><button class="ghost" data-a="replay">Replay this act</button><button class="ghost" data-a="menu" style="margin-top:6px">Home</button>`;
+  else if(kind==='dpause')c.innerHTML=`<div class="eyebrow">Dance Battle</div><h1>Paused</h1><button class="cta" data-a="dresume">Resume</button><button class="ghost" data-a="drestart">Restart the song</button><button class="ghost" data-a="dquit" style="margin-top:6px">Quit to home</button>`;
   else if(kind==='pause')c.innerHTML=`<div class="eyebrow">Intermission</div><h1>Paused</h1><button class="cta" data-a="resume">Resume</button><button class="ghost" data-a="settings">Settings</button><button class="ghost" data-a="replay">Restart this act</button><button class="ghost" data-a="map" style="margin-top:6px">Story map</button>`;
   else if(kind==='profiles')c.innerHTML=profilesHTML();
   else if(kind==='settings')c.innerHTML=settingsHTML();
@@ -199,6 +200,9 @@ function showOverlay(kind){
     const a=b.dataset.a;
     if(a==='next'){const n=nextInBallet(LI);startLevel(n>=0?n:LI);}else if(a==='replay')startLevel(LI);
     else if(a==='resume')resume();
+    else if(a==='dresume')resumeDance();
+    else if(a==='drestart'){if(actx)actx.resume().catch(()=>{});startDance();}
+    else if(a==='dquit')backToTitle();
     else if(a==='dance'||a==='rematch'){dance.turn=1;dance.results=[];startDance();}
     else if(a==='p2'){dance.turn=2;startDance();}
     else if(a==='menu')backToTitle();
@@ -220,7 +224,7 @@ function showOverlay(kind){
   }));
   $('overlay').classList.remove('hidden');
   $('hud').classList.toggle('show',mode==='story'&&kind!=='title');$('controls').classList.remove('show');$('coopctl').classList.remove('show');
-  $('lanes').classList.remove('show');$('dhud').classList.remove('show');
+  if(kind!=='dpause'){$('lanes').classList.remove('show');$('dhud').classList.remove('show');}
 }
 function titleScene(){const lv=balletLevels(ballet);setLevel(lv[Math.min(getUnlocked(ballet),lv.length)-1][1]);resetLevel();cam=0;}
 
@@ -313,6 +317,7 @@ $('mapHome').addEventListener('click',()=>{$('map').classList.add('hidden');back
 addEventListener('resize',()=>{if(state==='map')renderMap();});
 
 function backToTitle(){
+  if(actx&&actx.state==='suspended')actx.resume().catch(()=>{});
   shopReturn=null;closeStop(true);
   try{speechSynthesis.cancel();}catch(e){}
   $('map').classList.add('hidden');
